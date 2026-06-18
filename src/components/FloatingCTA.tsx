@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Phone, CalendarCheck } from "lucide-react";
-import { PHONE_TEL } from "@/components/ui/cta";
+import { CalendarCheck } from "lucide-react";
 
 export default function FloatingCTA(): React.JSX.Element {
   const [visible, setVisible] = useState(false);
@@ -38,17 +37,10 @@ export default function FloatingCTA(): React.JSX.Element {
         visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0"
       }`}
     >
-      <div className="flex items-center gap-3">
-        <a
-          href={PHONE_TEL}
-          aria-label="Call Koehler Home Improvement"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-navy-900/15 text-navy-900 transition-colors hover:border-brand-500 hover:text-brand-500"
-        >
-          <Phone className="h-5 w-5" />
-        </a>
+      <div className="flex items-center">
         <Link
           href="#form"
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand-500 font-display text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-colors hover:bg-brand-600"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-500 font-display text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-colors hover:bg-brand-600"
         >
           <CalendarCheck className="h-5 w-5" />
           Get My Free Estimate
