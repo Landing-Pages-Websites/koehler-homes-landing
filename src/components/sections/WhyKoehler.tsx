@@ -13,7 +13,7 @@ const REASONS = [
 
 export default function WhyKoehler(): React.JSX.Element {
   return (
-    <section id="why-koehler" className="bg-navy-900 py-20 text-white lg:py-28">
+    <section id="why-us" className="bg-navy-900 py-20 text-white lg:py-28">
       <div className="container-max grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.14em] text-gold-400">

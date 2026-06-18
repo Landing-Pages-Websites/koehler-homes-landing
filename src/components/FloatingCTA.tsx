@@ -47,7 +47,7 @@ export default function FloatingCTA(): React.JSX.Element {
           <Phone className="h-5 w-5" />
         </a>
         <Link
-          href="#get-quote"
+          href="#form"
           className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand-500 font-display text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-colors hover:bg-brand-600"
         >
           <CalendarCheck className="h-5 w-5" />
