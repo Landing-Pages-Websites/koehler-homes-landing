@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-export const siteUrl = "https://www.coselloconstruction.pro";
-export const siteName = "Cosello Construction Inc";
+export const siteUrl = "https://book.koehlerhomesinc.com";
+export const siteName = "Koehler Home Improvement";
 
 export type PageMetadataInput = {
   title: string;
@@ -18,8 +18,8 @@ export function buildPageMetadata({
   title,
   description,
   path,
-  image = "/images/social/default-og.webp",
-  imageAlt = "Cosello Construction window and door installation services in New Jersey, Pennsylvania, and Delaware",
+  image = "/images/koehler/project-a22.webp",
+  imageAlt = "Koehler Home Improvement replacement windows, doors and siding on a Jacksonville, Florida home",
   socialTitle,
   socialDescription,
   type = "website",
@@ -29,6 +29,7 @@ export function buildPageMetadata({
   const openGraphDescription = socialDescription ?? description;
 
   return {
+    metadataBase: new URL(siteUrl),
     title,
     description,
     alternates: {

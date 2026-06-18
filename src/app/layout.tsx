@@ -1,91 +1,83 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Poppins, Rubik } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FloatingCTA from "@/components/FloatingCTA";
 import { buildPageMetadata } from "@/lib/metadata";
 
-const inter = Inter({
+const poppins = Poppins({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["500", "600", "700"],
+  variable: "--font-poppins",
+  display: "swap",
 });
 
-const plusJakarta = Plus_Jakarta_Sans({
+const rubik = Rubik({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta",
+  weight: ["400", "500", "600"],
+  variable: "--font-rubik",
+  display: "swap",
 });
 
-const SITE_ID = "00fbcebb-a640-43d6-80d6-c1570f6cc2d9";
-const SITE_KEY = "sk_mnyn5cy1_mhuq3o2zbmm";
+const MEGA_SITE_ID = "18608ed3-80d5-434e-9b06-0255f9eba3fc";
+const MEGA_SITE_KEY = "x22yu9m8j8g0cx1r";
+const GTM_ID = "GTM-P6GZN8F2";
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://www.coselloconstruction.pro"),
-  // 👇 ADD THIS LINE TO FORCE SERVER-SIDE CANONICAL TAGS GLOBALLY
-  alternates: {
-    canonical: "./",
-  },
-  ...buildPageMetadata({
-    title: "Cosello Construction | Window & Door Installation | NJ, PA, DE",
-    description:
-      "South Jersey's trusted window and door installation experts since 2003. Andersen Certified Contractor serving NJ, PA & DE. Free quotes, 2-year labor warranty. Call (856) 215-3470.",
-    path: "/",
-    image: "/images/social/homepage-og.webp",
-    imageAlt:
-      "Cosello Construction window and door installation team serving New Jersey, Pennsylvania, and Delaware",
-    socialDescription:
-      "South Jersey's trusted window and door installation experts since 2003. Free quotes & 2-year labor warranty.",
-  }),
-  keywords:
-    "window installation, door installation, Cosello Construction, South Jersey, Philadelphia, Andersen certified contractor, window replacement, residential windows, commercial doors",
-};
+export const metadata: Metadata = buildPageMetadata({
+  title:
+    "Replacement Windows, Doors & Siding | Jacksonville, FL | Koehler Home Improvement",
+  description:
+    "Family-owned Jacksonville home improvement since 2003. 50% off installation + a free in-home estimate on energy-efficient, hurricane-rated windows, doors & siding. Financing as low as $5/day.",
+  path: "/",
+  image: "/images/koehler/project-a22.webp",
+  imageAlt:
+    "Florida home with replacement windows and a glass patio door installed by Koehler Home Improvement in Jacksonville",
+});
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${plusJakarta.variable}`}>
-      {/* 👇 ADD THIS HEAD BLOCK AND CHARSET TAG AS THE FIRST ITEM */}
+    <html lang="en" className={`${poppins.variable} ${rubik.variable}`}>
       <head>
         <meta charSet="utf-8" />
-      </head>
-      <body className="font-sans bg-white">
-        {/* Google Ads */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=AW-675660857"
-          strategy="afterInteractive"
-        />
-        <Script id="google-ads-config" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'AW-675660857');
-          `}
+        <meta name="mega-site-id" content={MEGA_SITE_ID} />
+        {/* Google Tag Manager */}
+        <Script id="gtm-base" strategy="afterInteractive">
+          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`}
         </Script>
-
-        <Header />
-        <main>{children}</main>
-        <Footer />
-
-        {/* Mega optimizer — siteKey config must come before the script */}
+        {/* MegaTag optimizer — config must run before the optimizer script */}
         <Script id="mega-tag-config" strategy="afterInteractive">
-          {`window.MEGA_TAG_CONFIG={siteKey:"${SITE_KEY}",siteId:"${SITE_ID}"};window.API_ENDPOINT="https://optimizer.gomega.ai";window.TRACKING_API_ENDPOINT="https://events-api.gomega.ai";`}
+          {`window.MEGA_TAG_CONFIG={siteKey:"${MEGA_SITE_KEY}",siteId:"${MEGA_SITE_ID}"};window.API_ENDPOINT="https://optimizer.gomega.ai";window.TRACKING_API_ENDPOINT="https://events-api.gomega.ai";`}
         </Script>
         <Script
           id="gomega-optimizer"
           src="https://cdn.gomega.ai/scripts/optimizer.min.js"
-          data-site-id={SITE_ID}
+          data-site-id={MEGA_SITE_ID}
           strategy="afterInteractive"
         />
+      </head>
+      <body className="font-sans bg-white antialiased">
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+            title="Google Tag Manager"
+          />
+        </noscript>
 
-        {/* CTM call tracking */}
-        <Script
-          src="https://572388.tctm.co/t.js"
-          strategy="afterInteractive"
-        />
+        <Header />
+        <main>{children}</main>
+        <Footer />
+        <FloatingCTA />
+
+        {/* CallTrackingMetrics — shared MEGA universal CTM script */}
+        <Script src="https://572388.tctm.co/t.js" strategy="afterInteractive" />
       </body>
     </html>
   );

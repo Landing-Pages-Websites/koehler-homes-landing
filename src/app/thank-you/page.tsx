@@ -1,47 +1,47 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle, Phone, ArrowRight } from "lucide-react";
+import { CheckCircle2, Phone, ArrowRight } from "lucide-react";
+
+const PHONE_DISPLAY = "(904) 746-4003";
+const PHONE_TEL = "tel:+19047464003";
 
 export const metadata: Metadata = {
-  title: "Thank You | Cosello Construction",
+  title: "Thank You | Koehler Home Improvement",
   description:
-    "Thank you for contacting Cosello Construction. We typically respond within 1 business hour.",
+    "Thanks for reaching out to Koehler Home Improvement. A team member will be in touch shortly about your free in-home estimate.",
+  robots: { index: false, follow: false },
 };
 
-export default function ThankYouPage() {
+export default function ThankYouPage(): React.JSX.Element {
   return (
-    <section className="section-padding bg-white min-h-[60vh] flex items-center">
-      <div className="container-max text-center max-w-2xl mx-auto">
-        <div className="flex justify-center mb-6">
-          <CheckCircle
-            className="w-16 h-16 text-orange-500"
-            strokeWidth={1.5}
-          />
+    <section className="flex min-h-[60vh] items-center bg-surface py-20">
+      <div className="container-max max-w-2xl text-center">
+        <div className="mb-6 flex justify-center">
+          <CheckCircle2 className="h-16 w-16 text-success" strokeWidth={1.5} />
         </div>
-        <h1 className="font-heading text-3xl md:text-4xl font-bold text-navy-900 mb-4">
-          Thank You for{" "}
-          <span className="text-orange-500">Reaching Out!</span>
+        <h1 className="font-display text-3xl font-bold text-navy-900 sm:text-4xl">
+          Thanks — we&apos;ve got your request
         </h1>
-        <p className="text-gray-600 text-lg mb-3 leading-relaxed">
-          We got your request and a team member will be in touch shortly with your free quote.
+        <p className="mx-auto mt-4 max-w-lg text-lg leading-relaxed text-muted">
+          A member of the Koehler team will reach out shortly to confirm the details
+          and schedule your free in-home estimate.
         </p>
-        <p className="text-gray-500 text-sm mb-10">
-         Want to get started sooner? Give us a call anytime.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <p className="mt-2 text-sm text-muted">Want to get started sooner? Give us a call.</p>
+
+        <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a
-            href="tel:8563171770"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-all duration-200 shadow-lg shadow-orange-500/25"
+            href={PHONE_TEL}
+            className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-7 py-4 font-display text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400"
           >
-            <Phone className="w-5 h-5" />
-            Call Us Now
+            <Phone className="h-5 w-5" />
+            Call {PHONE_DISPLAY}
           </a>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-8 py-4 border-2 border-navy-900 text-navy-900 font-semibold rounded-xl hover:bg-navy-900 hover:text-white transition-all duration-200"
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-navy-900/20 px-7 py-4 font-display text-base font-semibold text-navy-900 transition-colors hover:border-brand-500 hover:text-brand-500"
           >
-            Back to Home
-            <ArrowRight className="w-4 h-4" />
+            Back to home
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
