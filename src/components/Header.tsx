@@ -45,7 +45,7 @@ export default function Header(): React.JSX.Element {
             {PHONE_DISPLAY}
           </a>
           <Link
-            href="#get-quote"
+            href="#form"
             className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 font-display text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400"
           >
             <Phone className="h-4 w-4 sm:hidden" />

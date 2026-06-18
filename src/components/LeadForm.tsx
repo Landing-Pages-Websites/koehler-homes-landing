@@ -14,6 +14,11 @@ const TIMELINE_OPTIONS = [
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Qualified submitters are redirected here post-submit (the page itself has no
+// Calendly widget/button — this redirect is the only Calendly touchpoint).
+const CALENDLY_URL =
+  "https://calendly.com/toby-koehlerhomesinc/project-consultation";
+
 interface FormState {
   firstName: string;
   lastName: string;
@@ -33,7 +38,7 @@ const EMPTY: FormState = {
 };
 
 type Errors = Partial<Record<keyof FormState, string>>;
-type Status = "idle" | "submitting" | "error";
+type Status = "idle" | "submitting" | "redirecting" | "error";
 
 function isQualified(data: FormState): boolean {
   return (
@@ -115,6 +120,13 @@ export default function LeadForm(): React.JSX.Element {
       pushDataLayer("form_submission", qualified);
       if (qualified) pushDataLayer("qualified_lead", qualified);
 
+      // Qualified → book a consultation (Calendly). Disqualified leads still
+      // reached HubSpot via the submit above; they get the thank-you page only.
+      if (qualified) {
+        setStatus("redirecting");
+        window.location.assign(CALENDLY_URL);
+        return;
+      }
       router.push("/thank-you");
     } catch {
       setStatus("error");
@@ -122,10 +134,11 @@ export default function LeadForm(): React.JSX.Element {
   };
 
   const submitting = status === "submitting";
+  const busy = submitting || status === "redirecting";
 
   return (
     <div
-      id="get-quote"
+      id="form"
       className="rounded-2xl bg-white p-6 shadow-2xl shadow-navy-950/30 ring-1 ring-line sm:p-8"
     >
       <h2 className="font-display text-2xl font-semibold text-navy-900">
@@ -265,11 +278,15 @@ export default function LeadForm(): React.JSX.Element {
         <button
           type="button"
           onClick={onSubmitClick}
-          disabled={submitting}
+          disabled={busy}
           className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-4 font-display text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition-all duration-200 hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
-          {submitting ? "Sending…" : "Get My Free In-Home Estimate"}
+          {busy && <Loader2 className="h-5 w-5 animate-spin" />}
+          {status === "redirecting"
+            ? "Redirecting you to book your consultation…"
+            : submitting
+              ? "Sending…"
+              : "Get My Free In-Home Estimate"}
         </button>
 
         {status === "error" && (

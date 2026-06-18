@@ -14,7 +14,7 @@ export function PrimaryCta({
 }): React.JSX.Element {
   return (
     <Link
-      href="#get-quote"
+      href="#form"
       className={`group inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-7 py-4 font-display text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition-all duration-200 hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400 ${className}`}
     >
       {label}
