@@ -145,9 +145,12 @@ export default function LeadForm(): React.JSX.Element {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field
             label="First name"
+            htmlFor="firstName"
             error={errors.firstName}
             input={
               <input
+                id="firstName"
+                name="firstName"
                 type="text"
                 autoComplete="given-name"
                 value={data.firstName}
@@ -159,9 +162,12 @@ export default function LeadForm(): React.JSX.Element {
           />
           <Field
             label="Last name"
+            htmlFor="lastName"
             error={errors.lastName}
             input={
               <input
+                id="lastName"
+                name="lastName"
                 type="text"
                 autoComplete="family-name"
                 value={data.lastName}
@@ -175,9 +181,12 @@ export default function LeadForm(): React.JSX.Element {
 
         <Field
           label="Email"
+          htmlFor="email"
           error={errors.email}
           input={
             <input
+              id="email"
+              name="email"
               type="email"
               autoComplete="email"
               value={data.email}
@@ -190,9 +199,12 @@ export default function LeadForm(): React.JSX.Element {
 
         <Field
           label="Phone"
+          htmlFor="phone"
           error={errors.phone}
           input={
             <input
+              id="phone"
+              name="phone"
               type="tel"
               inputMode="numeric"
               autoComplete="tel"
@@ -207,9 +219,12 @@ export default function LeadForm(): React.JSX.Element {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field
             label="Do you own the home?"
+            htmlFor="ownsHome"
             error={errors.ownsHome}
             input={
               <select
+                id="ownsHome"
+                name="ownsHome"
                 value={data.ownsHome}
                 onChange={(e) => update("ownsHome", e.target.value)}
                 className={selectClass(errors.ownsHome, data.ownsHome)}
@@ -224,9 +239,12 @@ export default function LeadForm(): React.JSX.Element {
           />
           <Field
             label="When do you want to start?"
+            htmlFor="timeline"
             error={errors.timeline}
             input={
               <select
+                id="timeline"
+                name="timeline"
                 value={data.timeline}
                 onChange={(e) => update("timeline", e.target.value)}
                 className={selectClass(errors.timeline, data.timeline)}
@@ -271,21 +289,26 @@ export default function LeadForm(): React.JSX.Element {
 
 function Field({
   label,
+  htmlFor,
   error,
   input,
 }: {
   label: string;
+  htmlFor: string;
   error?: string;
   input: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-navy-900">
+    <div className="block">
+      <label
+        htmlFor={htmlFor}
+        className="mb-1.5 block text-sm font-medium text-navy-900"
+      >
         {label}
-      </span>
+      </label>
       {input}
       {error && <span className="mt-1 block text-xs text-[#d92d20]">{error}</span>}
-    </label>
+    </div>
   );
 }
 
