@@ -4,7 +4,7 @@ import { DualCta } from "@/components/ui/cta";
 
 const REASONS = [
   "Family-owned since 2003 — over 20 years serving Jacksonville",
-  "Installed by our own employees, never subcontractors",
+  "Dedicated crew that works exclusively for Koehler",
   "Owner Toby personally reviews every proposal",
   "Florida Certified Building Contractor (CBC056153)",
   "Licensed, insured & bonded",

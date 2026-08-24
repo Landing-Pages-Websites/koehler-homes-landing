@@ -5,7 +5,7 @@ import { DualCta } from "@/components/ui/cta";
 
 const CHIPS = [
   { icon: CalendarClock, label: "Family-owned since 2003" },
-  { icon: Users, label: "Our employees, never subcontractors" },
+  { icon: Users, label: "Dedicated crew that works exclusively for Koehler" },
   { icon: ShieldCheck, label: "Florida Lic. CBC056153" },
   { icon: Wind, label: "Hurricane-rated impact products" },
 ];
@@ -25,8 +25,9 @@ export default function Hero(): React.JSX.Element {
         <div className="absolute inset-0 bg-gradient-to-r from-navy-950 via-navy-950/92 to-navy-900/70" />
       </div>
 
-      <div className="relative container-max grid items-center gap-12 py-16 lg:grid-cols-12 lg:gap-10 lg:py-24">
-        <div className="animate-fade-up lg:col-span-7">
+      <div className="relative container-max grid items-start gap-y-8 py-16 lg:grid-cols-12 lg:gap-x-10 lg:gap-y-8 lg:py-24">
+        {/* Intro copy: eyebrow, headline, subhead */}
+        <div className="animate-fade-up lg:col-span-7 lg:col-start-1 lg:row-start-1">
           <span className="inline-flex items-center gap-2 rounded-full bg-gold-500/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-gold-400 ring-1 ring-gold-500/30">
             Jacksonville, FL · 50% off installation
           </span>
@@ -42,24 +43,12 @@ export default function Hero(): React.JSX.Element {
             has been doing this the right way since 2003 — built for Florida heat,
             humidity, and hurricane season.
           </p>
-
-          <div className="mt-8">
-            <DualCta phoneVariant="dark" />
-          </div>
-
-          <ul className="mt-10 grid max-w-xl grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-            {CHIPS.map((chip) => (
-              <li key={chip.label} className="flex items-center gap-2.5 text-sm text-white/85">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
-                  <chip.icon className="h-4 w-4 text-gold-400" strokeWidth={2} />
-                </span>
-                {chip.label}
-              </li>
-            ))}
-          </ul>
         </div>
 
-        <div className="relative animate-fade-in lg:col-span-5">
+        {/* Lead form: on mobile it sits directly under the subhead so its first
+            field lands inside the initial viewport; on desktop it holds the
+            right column, spanning the intro and supporting rows. */}
+        <div className="relative animate-fade-in lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2">
           {/* Signature offer seal */}
           <div
             aria-hidden="true"
@@ -71,6 +60,22 @@ export default function Hero(): React.JSX.Element {
             </span>
           </div>
           <LeadForm />
+        </div>
+
+        {/* Supporting CTA + trust chips */}
+        <div className="animate-fade-up lg:col-span-7 lg:col-start-1 lg:row-start-2">
+          <DualCta phoneVariant="dark" />
+
+          <ul className="mt-10 grid max-w-xl grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+            {CHIPS.map((chip) => (
+              <li key={chip.label} className="flex items-center gap-2.5 text-sm text-white/85">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
+                  <chip.icon className="h-4 w-4 text-gold-400" strokeWidth={2} />
+                </span>
+                {chip.label}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

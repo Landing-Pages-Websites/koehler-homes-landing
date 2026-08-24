@@ -19,8 +19,8 @@ export default function Footer(): React.JSX.Element {
           />
           <p className="mt-5 max-w-sm text-sm leading-relaxed">
             Family-owned home improvement in Jacksonville since 2003. Energy-efficient,
-            hurricane-rated windows, doors and James Hardie siding — installed by our
-            own employees, never subcontractors.
+            hurricane-rated windows, doors and James Hardie siding. Dedicated crew that
+            works exclusively for Koehler.
           </p>
         </div>
 
