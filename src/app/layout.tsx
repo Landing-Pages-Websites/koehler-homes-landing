@@ -23,6 +23,7 @@ const rubik = Rubik({
 
 const MEGA_SITE_ID = "18608ed3-80d5-434e-9b06-0255f9eba3fc";
 const MEGA_SITE_KEY = "x22yu9m8j8g0cx1r";
+const MEGA_PIXEL_ID = "1730457978175097";
 const GTM_ID = "GTM-P6GZN8F2";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -50,7 +51,7 @@ export default function RootLayout({
         </Script>
         {/* MegaTag optimizer — config must run before the optimizer script */}
         <Script id="mega-tag-config" strategy="afterInteractive">
-          {`window.MEGA_TAG_CONFIG={siteKey:"${MEGA_SITE_KEY}",siteId:"${MEGA_SITE_ID}"};window.API_ENDPOINT="https://optimizer.gomega.ai";window.TRACKING_API_ENDPOINT="https://events-api.gomega.ai";`}
+          {`window.MEGA_TAG_CONFIG={siteKey:"${MEGA_SITE_KEY}",siteId:"${MEGA_SITE_ID}",pixelId:"${MEGA_PIXEL_ID}"};window.API_ENDPOINT="https://optimizer.gomega.ai";window.TRACKING_API_ENDPOINT="https://events-api.gomega.ai";`}
         </Script>
         <Script
           id="gomega-optimizer"
