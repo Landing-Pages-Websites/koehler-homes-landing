@@ -168,11 +168,20 @@ export const useMegaLeadForm = (): UseMegaLeadFormReturn => {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
+      let body: SubmissionResponse;
+      try {
+        body = (await response.json()) as SubmissionResponse;
+      } catch (error) {
+        throw new Error(
+          `Submission returned an unreadable response: ${String(error)}`
+        );
+      }
+
+      if (!response.ok || body?.ok !== true) {
         throw new Error(`Submission failed: ${response.status}`);
       }
 
-      return { ok: true, id: (await response.json()).id };
+      return body;
     },
     []
   );

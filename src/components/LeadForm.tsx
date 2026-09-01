@@ -61,6 +61,14 @@ function validate(data: FormState): Errors {
   return errors;
 }
 
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 10);
+  if (digits.length === 0) return "";
+  if (digits.length < 4) return `(${digits}`;
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 function pushDataLayer(event: string, qualified: boolean): void {
   if (typeof window === "undefined") return;
   window.dataLayer = window.dataLayer || [];
@@ -75,6 +83,7 @@ export default function LeadForm(): React.JSX.Element {
   const router = useRouter();
   const { submit } = useMegaLeadForm();
   const formRef = useRef<HTMLFormElement>(null);
+  const inFlightRef = useRef<boolean>(false);
   const [data, setData] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<Status>("idle");
@@ -84,26 +93,26 @@ export default function LeadForm(): React.JSX.Element {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  // Validate first, then hand off to the form's submit handler.
-  const onSubmitClick = (): void => {
-    if (status === "submitting") return;
-    const found = validate(data);
-    if (Object.keys(found).length > 0) {
-      setErrors(found);
+  // Single validated submission routine. Native validity is the gate; inline
+  // errors mirror it for accessible field-level messaging.
+  const runSubmit = async (): Promise<void> => {
+    const form = formRef.current;
+    if (!form) return;
+    if (!form.checkValidity()) {
+      setErrors(validate(data));
+      form.reportValidity();
       return;
     }
-    formRef.current?.requestSubmit();
-  };
-
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-    if (status === "submitting") return;
+    // Synchronous latch: only one request may be in flight, cleared on every
+    // outcome so a failed submit stays retryable.
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setStatus("submitting");
 
     const qualified = isQualified(data);
 
     try {
-      await submit({
+      const res = await submit({
         firstName: data.firstName.trim(),
         lastName: data.lastName.trim(),
         email: data.email.trim(),
@@ -111,6 +120,7 @@ export default function LeadForm(): React.JSX.Element {
         ownsHome: data.ownsHome,
         timeline: data.timeline,
       });
+      if (res?.ok !== true) throw new Error("Submission was not accepted");
 
       // Fire MegaTag conversion before any dataLayer push.
       window.MegaTag?.trackEvent?.("form_submit", {
@@ -130,7 +140,30 @@ export default function LeadForm(): React.JSX.Element {
       router.push("/thank-you");
     } catch {
       setStatus("error");
+    } finally {
+      inFlightRef.current = false;
     }
+  };
+
+  // Submit button: cancel native submission, then run the validated routine
+  // directly so no pre-response native submit beacon can fire.
+  const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
+    e.preventDefault();
+    void runSubmit();
+  };
+
+  // Native submit is only ever a fallback; it must never fire the request.
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
+  };
+
+  // Enter in a field must not trigger a native submit; route it through the
+  // same validated routine exactly once.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>): void => {
+    if (e.key !== "Enter") return;
+    if ((e.target as HTMLElement).tagName === "TEXTAREA") return;
+    e.preventDefault();
+    void runSubmit();
   };
 
   const submitting = status === "submitting";
@@ -151,13 +184,13 @@ export default function LeadForm(): React.JSX.Element {
 
       <form
         ref={formRef}
-        onSubmit={handleSubmit}
-        noValidate
+        onSubmit={handleFormSubmit}
+        onKeyDown={handleKeyDown}
         className="mt-6 space-y-4"
       >
         <button
-          type="button"
-          onClick={onSubmitClick}
+          type="submit"
+          onClick={handleButtonClick}
           disabled={busy}
           className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-4 font-display text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition-all duration-200 hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400 disabled:cursor-not-allowed disabled:opacity-70"
         >
@@ -179,6 +212,7 @@ export default function LeadForm(): React.JSX.Element {
                 id="firstName"
                 name="firstName"
                 type="text"
+                required
                 autoComplete="given-name"
                 value={data.firstName}
                 onChange={(e) => update("firstName", e.target.value)}
@@ -196,6 +230,7 @@ export default function LeadForm(): React.JSX.Element {
                 id="lastName"
                 name="lastName"
                 type="text"
+                required
                 autoComplete="family-name"
                 value={data.lastName}
                 onChange={(e) => update("lastName", e.target.value)}
@@ -215,6 +250,8 @@ export default function LeadForm(): React.JSX.Element {
               id="email"
               name="email"
               type="email"
+              required
+              pattern="[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}"
               autoComplete="email"
               value={data.email}
               onChange={(e) => update("email", e.target.value)}
@@ -233,10 +270,13 @@ export default function LeadForm(): React.JSX.Element {
               id="phone"
               name="phone"
               type="tel"
+              required
+              pattern="\(\d{3}\) \d{3}-\d{4}"
+              title="Enter a 10-digit US phone number as (XXX) XXX-XXXX"
               inputMode="numeric"
               autoComplete="tel"
               value={data.phone}
-              onChange={(e) => update("phone", e.target.value)}
+              onChange={(e) => update("phone", formatPhone(e.target.value))}
               className={inputClass(errors.phone)}
               placeholder="(904) 555-0199"
             />
@@ -252,6 +292,7 @@ export default function LeadForm(): React.JSX.Element {
               <select
                 id="ownsHome"
                 name="ownsHome"
+                required
                 value={data.ownsHome}
                 onChange={(e) => update("ownsHome", e.target.value)}
                 className={selectClass(errors.ownsHome, data.ownsHome)}
@@ -272,6 +313,7 @@ export default function LeadForm(): React.JSX.Element {
               <select
                 id="timeline"
                 name="timeline"
+                required
                 value={data.timeline}
                 onChange={(e) => update("timeline", e.target.value)}
                 className={selectClass(errors.timeline, data.timeline)}
