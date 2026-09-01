@@ -155,6 +155,20 @@ export default function LeadForm(): React.JSX.Element {
         noValidate
         className="mt-6 space-y-4"
       >
+        <button
+          type="button"
+          onClick={onSubmitClick}
+          disabled={busy}
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-4 font-display text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition-all duration-200 hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {busy && <Loader2 className="h-5 w-5 animate-spin" />}
+          {status === "redirecting"
+            ? "Redirecting you to book your consultation…"
+            : submitting
+              ? "Sending…"
+              : "Get My Free In-Home Estimate"}
+        </button>
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field
             label="First name"
@@ -274,20 +288,6 @@ export default function LeadForm(): React.JSX.Element {
             }
           />
         </div>
-
-        <button
-          type="button"
-          onClick={onSubmitClick}
-          disabled={busy}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-4 font-display text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition-all duration-200 hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {busy && <Loader2 className="h-5 w-5 animate-spin" />}
-          {status === "redirecting"
-            ? "Redirecting you to book your consultation…"
-            : submitting
-              ? "Sending…"
-              : "Get My Free In-Home Estimate"}
-        </button>
 
         {status === "error" && (
           <p className="text-center text-sm text-[#d92d20]" role="alert">
