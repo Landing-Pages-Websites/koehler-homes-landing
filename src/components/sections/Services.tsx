@@ -40,7 +40,7 @@ const SERVICES: Service[] = [
     image: "/images/koehler/siding.webp",
     alt: "Koehler installer fitting James Hardie fiber cement siding on a Florida home",
     body: "Florida's sun, humidity, and wind are hard on exteriors. James Hardie fiber cement siding is engineered for exactly this climate — it resists moisture, rot, and warping, stands up to wind, and holds its color far longer than ordinary siding. Installed by our own crews, it gives your home a durable, low-maintenance exterior that looks sharp for years.",
-    points: ["Engineered for Florida humidity & sun", "Wind, rot & moisture resistant", "Installed by our own employees"],
+    points: ["Engineered for Florida humidity & sun", "Wind, rot & moisture resistant", "Installed by our dedicated local crew"],
   },
 ];
 

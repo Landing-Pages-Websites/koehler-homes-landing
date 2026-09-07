@@ -11,7 +11,7 @@ interface Step {
 const STEPS: Step[] = [
   { icon: PhoneCall, title: "Free Consultation", body: "We visit your home, listen to what you need, and take exact measurements — no pressure." },
   { icon: FileText, title: "Custom Proposal", body: "You get a clear, written proposal with honest pricing and financing options. Owner Toby reviews every one." },
-  { icon: Hammer, title: "Professional Installation", body: "Our own employee crews install your windows, doors, or siding cleanly and on schedule." },
+  { icon: Hammer, title: "Professional Installation", body: "Our dedicated local crew installs your windows, doors, or siding cleanly and on schedule." },
   { icon: ClipboardCheck, title: "Final Walkthrough", body: "We walk the finished project with you and don't leave until you're completely satisfied." },
 ];
 
