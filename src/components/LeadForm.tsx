@@ -54,7 +54,7 @@ function validate(data: FormState): Errors {
   if (!data.lastName.trim()) errors.lastName = "Enter your last name";
   if (!data.email.trim()) errors.email = "Enter your email";
   else if (!EMAIL_RE.test(data.email)) errors.email = "Enter a valid email";
-  if (data.phone.replace(/\D/g, "").length < 10)
+  if (data.phone.replace(/\D/g, "").length !== 10)
     errors.phone = "Enter a valid phone number";
   if (!data.ownsHome) errors.ownsHome = "Select an option";
   if (!data.timeline) errors.timeline = "Select a timeline";
