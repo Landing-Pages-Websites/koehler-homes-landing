@@ -40,6 +40,37 @@ const EMPTY: FormState = {
 type Errors = Partial<Record<keyof FormState, string>>;
 type Status = "idle" | "submitting" | "redirecting" | "error";
 
+const US_COUNTRY_CODE = "1";
+const NATIONAL_LENGTH = 10;
+const IDLE_LABEL = "Get My Free In-Home Estimate";
+
+interface ParsedPhone {
+  countryCode: boolean;
+  national: string;
+}
+
+// Split an optional US +1 country code off the raw input. A leading "1" counts
+// as the country code only when the user typed a literal "+" or supplied more
+// than a full national number — so an ordinary 10-digit number is never
+// mis-read and no digit is dropped (the live truncation bug this fixes).
+function parsePhone(raw: string): ParsedPhone {
+  const digits = raw.replace(/\D/g, "");
+  const explicitPlus = raw.trimStart().startsWith("+");
+  const countryCode =
+    digits.startsWith(US_COUNTRY_CODE) &&
+    (digits.length > NATIONAL_LENGTH || explicitPlus);
+  return { countryCode, national: countryCode ? digits.slice(1) : digits };
+}
+
+// Label kept in a module-scope helper (above the button) so the status copy
+// stays byte-identical while remaining a single source of truth.
+function ctaLabel(status: Status): string {
+  if (status === "redirecting")
+    return "Redirecting you to book your consultation…";
+  if (status === "submitting") return "Sending…";
+  return IDLE_LABEL;
+}
+
 function isQualified(data: FormState): boolean {
   return (
     data.ownsHome === "Yes" &&
@@ -54,19 +85,33 @@ function validate(data: FormState): Errors {
   if (!data.lastName.trim()) errors.lastName = "Enter your last name";
   if (!data.email.trim()) errors.email = "Enter your email";
   else if (!EMAIL_RE.test(data.email)) errors.email = "Enter a valid email";
-  if (data.phone.replace(/\D/g, "").length !== 10)
+  // Exact ten national digits after stripping an optional US +1 country code
+  // (literal !== 10 keeps the landing-page phone lint contract satisfied).
+  if (parsePhone(data.phone).national.length !== 10)
     errors.phone = "Enter a valid phone number";
   if (!data.ownsHome) errors.ownsHome = "Select an option";
   if (!data.timeline) errors.timeline = "Select a timeline";
   return errors;
 }
 
+// Render the national number as (XXX) XXX-XXXX, prefixing "+1 " when a US
+// country code was supplied. Never truncates: any overflow digit stays visible
+// so an over-length number fails validation instead of being silently trimmed.
 function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 10);
-  if (digits.length === 0) return "";
-  if (digits.length < 4) return `(${digits}`;
-  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  const { countryCode, national } = parsePhone(value);
+  const prefix = countryCode ? "+1 " : "";
+  if (national.length === 0) return countryCode ? "+1 " : "";
+  if (national.length < 4) return `${prefix}(${national}`;
+  if (national.length < 7)
+    return `${prefix}(${national.slice(0, 3)}) ${national.slice(3)}`;
+  return `${prefix}(${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6)}`;
+}
+
+// Canonical value sent to the lead endpoint: E.164 (+1XXXXXXXXXX) when a US
+// country code was supplied, otherwise the formatted national number as typed.
+function toSubmittedPhone(value: string): string {
+  const { countryCode, national } = parsePhone(value);
+  return countryCode ? `+1${national}` : value.trim();
 }
 
 function pushDataLayer(event: string, qualified: boolean): void {
@@ -84,6 +129,7 @@ export default function LeadForm(): React.JSX.Element {
   const { submit } = useMegaLeadForm();
   const formRef = useRef<HTMLFormElement>(null);
   const inFlightRef = useRef<boolean>(false);
+  const submittedRef = useRef<boolean>(false);
   const [data, setData] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<Status>("idle");
@@ -98,6 +144,9 @@ export default function LeadForm(): React.JSX.Element {
   const runSubmit = async (): Promise<void> => {
     const form = formRef.current;
     if (!form) return;
+    // Terminal latch: once a submission was accepted, block every later call so
+    // a delayed redirect/navigation can never fire a second request.
+    if (submittedRef.current) return;
     if (!form.checkValidity()) {
       setErrors(validate(data));
       form.reportValidity();
@@ -116,11 +165,14 @@ export default function LeadForm(): React.JSX.Element {
         firstName: data.firstName.trim(),
         lastName: data.lastName.trim(),
         email: data.email.trim(),
-        phone: data.phone.trim(),
+        phone: toSubmittedPhone(data.phone),
         ownsHome: data.ownsHome,
         timeline: data.timeline,
       });
       if (res?.ok !== true) throw new Error("Submission was not accepted");
+      // Accepted: flip the terminal latch before any event/redirect so nothing
+      // downstream can trigger a second submission during pending navigation.
+      submittedRef.current = true;
 
       // Fire MegaTag conversion before any dataLayer push.
       window.MegaTag?.trackEvent?.("form_submit", {
@@ -189,17 +241,13 @@ export default function LeadForm(): React.JSX.Element {
         className="mt-6 space-y-4"
       >
         <button
-          type="submit"
+          type="button"
           onClick={handleButtonClick}
           disabled={busy}
           className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-4 font-display text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition-all duration-200 hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {busy && <Loader2 className="h-5 w-5 animate-spin" />}
-          {status === "redirecting"
-            ? "Redirecting you to book your consultation…"
-            : submitting
-              ? "Sending…"
-              : "Get My Free In-Home Estimate"}
+          {ctaLabel(status)}
         </button>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -271,8 +319,8 @@ export default function LeadForm(): React.JSX.Element {
               name="phone"
               type="tel"
               required
-              pattern="\(\d{3}\) \d{3}-\d{4}"
-              title="Enter a 10-digit US phone number as (XXX) XXX-XXXX"
+              pattern="(\+1 )?\(\d{3}\) \d{3}-\d{4}"
+              title="Enter a 10-digit US phone number, optionally with a +1 country code"
               inputMode="numeric"
               autoComplete="tel"
               value={data.phone}
