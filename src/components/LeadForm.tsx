@@ -47,19 +47,24 @@ const IDLE_LABEL = "Get My Free In-Home Estimate";
 interface ParsedPhone {
   countryCode: boolean;
   national: string;
+  plus: boolean;
 }
 
 // Split an optional US +1 country code off the raw input. A leading "1" counts
 // as the country code only when the user typed a literal "+" or supplied more
 // than a full national number — so an ordinary 10-digit number is never
 // mis-read and no digit is dropped (the live truncation bug this fixes).
+// `plus` records that a literal "+" was typed even before any digit exists, so
+// the prefix survives sequential entry (+ → +1 → +15…) and an unsupported
+// "+<code>" (e.g. +9045550199) keeps its stray "+" rather than passing as a
+// bare national number.
 function parsePhone(raw: string): ParsedPhone {
   const digits = raw.replace(/\D/g, "");
-  const explicitPlus = raw.trimStart().startsWith("+");
+  const plus = raw.trimStart().startsWith("+");
   const countryCode =
     digits.startsWith(US_COUNTRY_CODE) &&
-    (digits.length > NATIONAL_LENGTH || explicitPlus);
-  return { countryCode, national: countryCode ? digits.slice(1) : digits };
+    (digits.length > NATIONAL_LENGTH || plus);
+  return { countryCode, national: countryCode ? digits.slice(1) : digits, plus };
 }
 
 // Label kept in a module-scope helper (above the button) so the status copy
@@ -95,12 +100,15 @@ function validate(data: FormState): Errors {
 }
 
 // Render the national number as (XXX) XXX-XXXX, prefixing "+1 " when a US
-// country code was supplied. Never truncates: any overflow digit stays visible
-// so an over-length number fails validation instead of being silently trimmed.
+// country code was supplied. A typed-but-unresolved "+" (lone "+" mid-entry, or
+// an unsupported "+<non-1 code>") keeps a bare "+" so React never drops it and
+// the value fails the tel pattern instead of masquerading as a national number.
+// Never truncates: any overflow digit stays visible so an over-length number
+// fails validation instead of being silently trimmed.
 function formatPhone(value: string): string {
-  const { countryCode, national } = parsePhone(value);
-  const prefix = countryCode ? "+1 " : "";
-  if (national.length === 0) return countryCode ? "+1 " : "";
+  const { countryCode, national, plus } = parsePhone(value);
+  const prefix = countryCode ? "+1 " : plus ? "+" : "";
+  if (national.length === 0) return prefix;
   if (national.length < 4) return `${prefix}(${national}`;
   if (national.length < 7)
     return `${prefix}(${national.slice(0, 3)}) ${national.slice(3)}`;
