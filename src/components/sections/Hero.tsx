@@ -37,6 +37,10 @@ export default function Hero(): React.JSX.Element {
             <span className="text-gold-400">Jacksonville</span> Homes
           </h1>
 
+          <p className="mt-4 max-w-xl text-base font-semibold leading-relaxed text-white sm:text-lg">
+            Full replacement for entry, sliding glass, French and patio doors.
+          </p>
+
           <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/80">
             Get <strong className="font-semibold text-white">50% off installation</strong>{" "}
             and a free in-home estimate from a family-owned Jacksonville company that
