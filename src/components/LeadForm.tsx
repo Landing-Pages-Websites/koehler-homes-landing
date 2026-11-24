@@ -16,6 +16,7 @@ import {
   LEAD_FIELDS,
   OWNS_HOME_OPTIONS,
   TIMELINE_OPTIONS,
+  normalizeLeadValues,
   validateLeadValues,
   type LeadFieldErrors,
   type LeadFieldName,
@@ -139,6 +140,8 @@ export default function LeadForm(): React.JSX.Element {
       // Fire MegaTag conversion before any dataLayer push.
       window.MegaTag?.trackEvent?.("form_submit", {
         lead_quality: qualified ? "qualified" : "disqualified",
+        elementId: "koehler-lead-form",
+        formData: normalizeLeadValues(data),
       });
       pushDataLayer("form_submit", qualified);
       pushDataLayer("form_submission", qualified);
@@ -197,6 +200,7 @@ export default function LeadForm(): React.JSX.Element {
       </p>
 
       <form
+        id="koehler-lead-form"
         ref={formRef}
         noValidate
         onSubmit={handleFormSubmit}
