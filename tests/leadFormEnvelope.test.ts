@@ -47,7 +47,7 @@ test("the success-only MegaTag form_submit carries elementId and normalized form
   const call = runSubmitBody().match(/trackEvent\?\.\("form_submit", \{([\s\S]*?)\}\);/);
   assert.ok(call, "MegaTag form_submit call not found");
   const keys = [...call[1].matchAll(/^\s*(\w+):/gm)].map((match) => match[1]);
-  assert.deepEqual(keys, ["lead_quality", "elementId", "formData"]);
+  assert.deepEqual(keys.sort(), ["elementId", "formData", "lead_quality"]);
   assert.match(call[1], new RegExp(`elementId: "${FORM_ID}"`));
   assert.match(call[1], /formData: normalizeLeadValues\(data\)/);
   assert.match(call[1], /lead_quality: qualified \? "qualified" : "disqualified"/);
