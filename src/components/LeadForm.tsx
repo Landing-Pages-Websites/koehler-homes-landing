@@ -4,29 +4,30 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useMegaLeadForm } from "@/hooks/useMegaLeadForm";
-
-const TIMELINE_OPTIONS = [
-  "ASAP",
-  "Within 30 days",
-  "1–3 months",
-  "Just researching",
-] as const;
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import {
+  EMAIL_ERROR,
+  EMAIL_MAX_LENGTH,
+  EMAIL_PATTERN,
+  PHONE_ERROR,
+  PHONE_PATTERN,
+  formatPhone,
+} from "@/lib/fields";
+import {
+  LEAD_FIELDS,
+  OWNS_HOME_OPTIONS,
+  TIMELINE_OPTIONS,
+  validateLeadValues,
+  type LeadFieldErrors,
+  type LeadFieldName,
+  type LeadValues,
+} from "@/lib/leadFields";
 
 // Qualified submitters are redirected here post-submit (the page itself has no
 // Calendly widget/button — this redirect is the only Calendly touchpoint).
 const CALENDLY_URL =
   "https://calendly.com/toby-koehlerhomesinc/project-consultation";
 
-interface FormState {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  ownsHome: string;
-  timeline: string;
-}
+type FormState = LeadValues;
 
 const EMPTY: FormState = {
   firstName: "",
@@ -37,35 +38,9 @@ const EMPTY: FormState = {
   timeline: "",
 };
 
-type Errors = Partial<Record<keyof FormState, string>>;
 type Status = "idle" | "submitting" | "redirecting" | "error";
 
-const US_COUNTRY_CODE = "1";
-const NATIONAL_LENGTH = 10;
 const IDLE_LABEL = "Get My Free In-Home Estimate";
-
-interface ParsedPhone {
-  countryCode: boolean;
-  national: string;
-  plus: boolean;
-}
-
-// Split an optional US +1 country code off the raw input. A leading "1" counts
-// as the country code only when the user typed a literal "+" or supplied more
-// than a full national number — so an ordinary 10-digit number is never
-// mis-read and no digit is dropped (the live truncation bug this fixes).
-// `plus` records that a literal "+" was typed even before any digit exists, so
-// the prefix survives sequential entry (+ → +1 → +15…) and an unsupported
-// "+<code>" (e.g. +9045550199) keeps its stray "+" rather than passing as a
-// bare national number.
-function parsePhone(raw: string): ParsedPhone {
-  const digits = raw.replace(/\D/g, "");
-  const plus = raw.trimStart().startsWith("+");
-  const countryCode =
-    digits.startsWith(US_COUNTRY_CODE) &&
-    (digits.length > NATIONAL_LENGTH || plus);
-  return { countryCode, national: countryCode ? digits.slice(1) : digits, plus };
-}
 
 // Label kept in a module-scope helper (above the button) so the status copy
 // stays byte-identical while remaining a single source of truth.
@@ -84,42 +59,24 @@ function isQualified(data: FormState): boolean {
   );
 }
 
-function validate(data: FormState): Errors {
-  const errors: Errors = {};
-  if (!data.firstName.trim()) errors.firstName = "Enter your first name";
-  if (!data.lastName.trim()) errors.lastName = "Enter your last name";
-  if (!data.email.trim()) errors.email = "Enter your email";
-  else if (!EMAIL_RE.test(data.email)) errors.email = "Enter a valid email";
-  // Exact ten national digits after stripping an optional US +1 country code
-  // (literal !== 10 keeps the landing-page phone lint contract satisfied).
-  if (parsePhone(data.phone).national.length !== 10)
-    errors.phone = "Enter a valid phone number";
-  if (!data.ownsHome) errors.ownsHome = "Select an option";
-  if (!data.timeline) errors.timeline = "Select a timeline";
-  return errors;
+// noValidate leaves the shared declaration validator as the only judge, so the
+// first invalid field is focused here instead of by the browser tooltip.
+function focusFirstInvalid(form: HTMLFormElement, errors: LeadFieldErrors): void {
+  const first = LEAD_FIELDS.find((field) => errors[field.name]);
+  if (!first) return;
+  const element = form.elements.namedItem(first.name);
+  if (element instanceof HTMLElement) element.focus();
 }
 
-// Render the national number as (XXX) XXX-XXXX, prefixing "+1 " when a US
-// country code was supplied. A typed-but-unresolved "+" (lone "+" mid-entry, or
-// an unsupported "+<non-1 code>") keeps a bare "+" so React never drops it and
-// the value fails the tel pattern instead of masquerading as a national number.
-// Never truncates: any overflow digit stays visible so an over-length number
-// fails validation instead of being silently trimmed.
-function formatPhone(value: string): string {
-  const { countryCode, national, plus } = parsePhone(value);
-  const prefix = countryCode ? "+1 " : plus ? "+" : "";
-  if (national.length === 0) return prefix;
-  if (national.length < 4) return `${prefix}(${national}`;
-  if (national.length < 7)
-    return `${prefix}(${national.slice(0, 3)}) ${national.slice(3)}`;
-  return `${prefix}(${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6)}`;
-}
-
-// Canonical value sent to the lead endpoint: E.164 (+1XXXXXXXXXX) when a US
-// country code was supplied, otherwise the formatted national number as typed.
-function toSubmittedPhone(value: string): string {
-  const { countryCode, national } = parsePhone(value);
-  return countryCode ? `+1${national}` : value.trim();
+// Accessible wiring that links a field to its inline error message.
+function errorProps(
+  name: LeadFieldName,
+  error?: string,
+): { "aria-invalid"?: boolean; "aria-describedby"?: string } {
+  return {
+    "aria-invalid": error ? true : undefined,
+    "aria-describedby": error ? `${name}-error` : undefined,
+  };
 }
 
 function pushDataLayer(event: string, qualified: boolean): void {
@@ -139,7 +96,7 @@ export default function LeadForm(): React.JSX.Element {
   const inFlightRef = useRef<boolean>(false);
   const submittedRef = useRef<boolean>(false);
   const [data, setData] = useState<FormState>(EMPTY);
-  const [errors, setErrors] = useState<Errors>({});
+  const [errors, setErrors] = useState<LeadFieldErrors>({});
   const [status, setStatus] = useState<Status>("idle");
 
   const update = (field: keyof FormState, value: string): void => {
@@ -147,17 +104,20 @@ export default function LeadForm(): React.JSX.Element {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  // Single validated submission routine. Native validity is the gate; inline
-  // errors mirror it for accessible field-level messaging.
+  // Single validated submission routine. The shared six-field validator is the
+  // gate: email/phone are decided only by the canonical isValidEmail and
+  // isValidPhone in src/lib/fields.ts, and useMegaLeadForm.submit() runs the
+  // same validator again before transport.
   const runSubmit = async (): Promise<void> => {
     const form = formRef.current;
     if (!form) return;
     // Terminal latch: once a submission was accepted, block every later call so
     // a delayed redirect/navigation can never fire a second request.
     if (submittedRef.current) return;
-    if (!form.checkValidity()) {
-      setErrors(validate(data));
-      form.reportValidity();
+    const found = validateLeadValues(data);
+    if (Object.keys(found).length > 0) {
+      setErrors(found);
+      focusFirstInvalid(form, found);
       return;
     }
     // Synchronous latch: only one request may be in flight, cleared on every
@@ -169,14 +129,8 @@ export default function LeadForm(): React.JSX.Element {
     const qualified = isQualified(data);
 
     try {
-      const res = await submit({
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        email: data.email.trim(),
-        phone: toSubmittedPhone(data.phone),
-        ownsHome: data.ownsHome,
-        timeline: data.timeline,
-      });
+      // The hook trims, normalizes email/phone and sends the six declared keys.
+      const res = await submit(data);
       if (res?.ok !== true) throw new Error("Submission was not accepted");
       // Accepted: flip the terminal latch before any event/redirect so nothing
       // downstream can trigger a second submission during pending navigation.
@@ -244,6 +198,7 @@ export default function LeadForm(): React.JSX.Element {
 
       <form
         ref={formRef}
+        noValidate
         onSubmit={handleFormSubmit}
         onKeyDown={handleKeyDown}
         className="mt-6 space-y-4"
@@ -260,6 +215,7 @@ export default function LeadForm(): React.JSX.Element {
                 type="text"
                 required
                 autoComplete="given-name"
+                {...errorProps("firstName", errors.firstName)}
                 value={data.firstName}
                 onChange={(e) => update("firstName", e.target.value)}
                 className={inputClass(errors.firstName)}
@@ -278,6 +234,7 @@ export default function LeadForm(): React.JSX.Element {
                 type="text"
                 required
                 autoComplete="family-name"
+                {...errorProps("lastName", errors.lastName)}
                 value={data.lastName}
                 onChange={(e) => update("lastName", e.target.value)}
                 className={inputClass(errors.lastName)}
@@ -297,8 +254,14 @@ export default function LeadForm(): React.JSX.Element {
               name="email"
               type="email"
               required
-              pattern="[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}"
+              pattern={EMAIL_PATTERN}
+              title={EMAIL_ERROR}
+              inputMode="email"
+              maxLength={EMAIL_MAX_LENGTH}
+              spellCheck={false}
+              autoCapitalize="none"
               autoComplete="email"
+              {...errorProps("email", errors.email)}
               value={data.email}
               onChange={(e) => update("email", e.target.value)}
               className={inputClass(errors.email)}
@@ -317,10 +280,11 @@ export default function LeadForm(): React.JSX.Element {
               name="phone"
               type="tel"
               required
-              pattern="(\+1 )?\(\d{3}\) \d{3}-\d{4}"
-              title="Enter a 10-digit US phone number, optionally with a +1 country code"
+              pattern={PHONE_PATTERN}
+              title={PHONE_ERROR}
               inputMode="numeric"
-              autoComplete="tel"
+              autoComplete="tel-national"
+              {...errorProps("phone", errors.phone)}
               value={data.phone}
               onChange={(e) => update("phone", formatPhone(e.target.value))}
               className={inputClass(errors.phone)}
@@ -339,6 +303,7 @@ export default function LeadForm(): React.JSX.Element {
                 id="ownsHome"
                 name="ownsHome"
                 required
+                {...errorProps("ownsHome", errors.ownsHome)}
                 value={data.ownsHome}
                 onChange={(e) => update("ownsHome", e.target.value)}
                 className={selectClass(errors.ownsHome, data.ownsHome)}
@@ -346,8 +311,11 @@ export default function LeadForm(): React.JSX.Element {
                 <option value="" disabled>
                   Select…
                 </option>
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
+                {OWNS_HOME_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
               </select>
             }
           />
@@ -360,6 +328,7 @@ export default function LeadForm(): React.JSX.Element {
                 id="timeline"
                 name="timeline"
                 required
+                {...errorProps("timeline", errors.timeline)}
                 value={data.timeline}
                 onChange={(e) => update("timeline", e.target.value)}
                 className={selectClass(errors.timeline, data.timeline)}
@@ -422,7 +391,11 @@ function Field({
         {label}
       </label>
       {input}
-      {error && <span className="mt-1 block text-xs text-[#d92d20]">{error}</span>}
+      {error && (
+        <span id={`${htmlFor}-error`} className="mt-1 block text-xs text-[#d92d20]">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

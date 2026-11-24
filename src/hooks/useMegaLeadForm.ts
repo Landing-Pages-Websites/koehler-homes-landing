@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useRef } from "react";
+import { normalizeLeadValues } from "@/lib/leadFields";
 
 const CONFIG = {
   CUSTOMER_ID: "d7759bc3-0cfd-49b8-a031-8a7cef6c9fa0",
@@ -147,13 +148,16 @@ export const useMegaLeadForm = (): UseMegaLeadFormReturn => {
 
   const submit = useCallback(
     async (formData: Record<string, unknown>): Promise<SubmissionResponse> => {
+      // Validate and normalize all six declared fields before attribution or
+      // transport; throws LeadValidationError so an invalid lead is never sent.
+      const leadFields = normalizeLeadValues(formData);
       const attribution = attributionRef.current || captureAttribution();
 
       const payload: SubmissionPayload = {
         customer_id: CONFIG.CUSTOMER_ID,
         site_id: CONFIG.SITE_ID,
         source_provider: CONFIG.SOURCE_PROVIDER,
-        form_data: formData,
+        form_data: leadFields,
         url: typeof window !== "undefined" ? window.location.href : "",
         referrer_url:
           typeof document !== "undefined" ? document.referrer || null : null,
