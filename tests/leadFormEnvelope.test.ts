@@ -29,9 +29,9 @@ afterEach(() => {
 
 function runSubmitBody(): string {
   const start = SOURCE.indexOf("const runSubmit = async");
-  const end = SOURCE.indexOf("const handleButtonClick");
-  assert.ok(start > 0 && end > start, "runSubmit routine not found");
-  return SOURCE.slice(start, end);
+  const endIndex = SOURCE.indexOf("const handleButtonClick");
+  assert.ok(start > 0 && endIndex > start, "runSubmit routine not found");
+  return SOURCE.slice(start, endIndex);
 }
 
 test("the actual <form> carries the koehler-lead-form id inside the #form wrapper", () => {
